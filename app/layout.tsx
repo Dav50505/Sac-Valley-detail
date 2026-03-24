@@ -68,6 +68,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${headingFont.variable} ${bodyFont.variable} h-full scroll-smooth antialiased`}
     >
       <body className="min-h-full bg-[var(--color-bg)] text-[var(--color-text)]">

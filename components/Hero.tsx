@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { motion } from "framer-motion";
 import {
   findScrollTarget,
   HERO_NAVIGATION_EVENT,
@@ -158,6 +159,16 @@ export default function Hero() {
   const [hasSequenceCompleted, setHasSequenceCompleted] = useState(false);
   const [isHeroActive, setIsHeroActive] = useState(false);
   const [isBodyLockedByHero, setIsBodyLockedByHero] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    setIsMobile(mediaQuery.matches);
+
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    mediaQuery.addEventListener('change', handler);
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -447,7 +458,8 @@ export default function Hero() {
           setReadyCount(loadedPriorityFramesRef.current.size);
         }
 
-        if (index === 0 || index === currentFrameRef.current) {
+        // Only update display if not on mobile, since mobile doesn't use the canvas sequence
+        if (window.innerWidth >= 768 && (index === 0 || index === currentFrameRef.current)) {
           updateSequenceDisplay(progressRef.current);
         }
       };
@@ -460,14 +472,20 @@ export default function Hero() {
 
     const initialScrollY = window.scrollY;
 
-    if (initialScrollY <= INITIAL_LOCK_SCROLL_THRESHOLD) {
-      updateSequenceDisplay(0);
-      syncWindowScrollToProgress(0);
-      applyHeroLock();
-    } else {
+    // Skip sequence lock and behavior on mobile
+    if (window.innerWidth < 768) {
       sequenceUnlockedRef.current = true;
       completionHandledRef.current = true;
-      updateSequenceDisplay(progressFromScrollTop(initialScrollY, trackRef.current));
+    } else {
+      if (initialScrollY <= INITIAL_LOCK_SCROLL_THRESHOLD) {
+        updateSequenceDisplay(0);
+        syncWindowScrollToProgress(0);
+        applyHeroLock();
+      } else {
+        sequenceUnlockedRef.current = true;
+        completionHandledRef.current = true;
+        updateSequenceDisplay(progressFromScrollTop(initialScrollY, trackRef.current));
+      }
     }
 
     window.addEventListener("scroll", scheduleSync, { passive: true });
@@ -512,18 +530,18 @@ export default function Hero() {
   const isSequenceReady = readyCount >= PRIORITY_FRAME_COUNT;
   const loadingProgress = Math.round((readyCount / PRIORITY_FRAME_COUNT) * 100);
   const overlayOpacity = 1 - clamp(progress / 0.3, 0, 1);
-  const trackHeight = `calc(${SEQUENCE_SCROLL_DISTANCE}px + 100svh)`;
+  const trackHeight = isMobile ? "auto" : `calc(${SEQUENCE_SCROLL_DISTANCE}px + 100svh)`;
 
   return (
     <section
       id="hero"
       ref={trackRef}
-      className="relative bg-[var(--color-bg)]"
-      data-hero-active={isHeroActive ? "true" : "false"}
-      data-hero-lock={isBodyLockedByHero ? "true" : "false"}
-      style={{ height: trackHeight }}
+      className={`relative bg-[var(--color-bg)] ${isMobile ? 'min-h-[100svh]' : ''}`}
+      data-hero-active={!isMobile && isHeroActive ? "true" : "false"}
+      data-hero-lock={!isMobile && isBodyLockedByHero ? "true" : "false"}
+      style={isMobile ? {} : { height: trackHeight }}
     >
-      <div className="sticky top-0 h-[100svh] overflow-hidden">
+      <div className={`sticky top-0 overflow-hidden ${isMobile ? 'min-h-[100svh] flex flex-col pt-[12vh]' : 'h-[100svh]'}`}>
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,0,0.14),transparent_32%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.44))]" />
         <div className="absolute inset-x-0 top-0 z-20 h-px bg-[linear-gradient(90deg,transparent,rgba(255,107,0,0.92),transparent)]" />
         <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_18%,rgba(255,107,0,0.12),transparent_22%),linear-gradient(180deg,rgba(0,0,0,0.08),transparent_25%,rgba(0,0,0,0.7)_100%)]" />
@@ -537,13 +555,38 @@ export default function Hero() {
           }}
         />
 
-        <HeroCanvas canvasRef={canvasRef} />
+        {!isMobile && (
+          <div className="absolute inset-0 z-0">
+            <HeroCanvas canvasRef={canvasRef} />
+          </div>
+        )}
 
-        <div className="relative z-20 flex h-full items-end px-4 pb-18 pt-24 sm:px-6 sm:pb-16 md:px-10 lg:px-16 lg:pb-18 max-[740px]:pb-24 max-[740px]:pt-22">
-          <div className="max-w-3xl">
+        {isMobile && (
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.85, y: 40 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+            className="relative z-0 flex flex-1 items-center justify-center w-full px-4 -mb-2 mt-4"
+          >
+            <img
+              src="/moblie.png"
+              alt="Sac Valley Detail mobile view"
+              className="w-full max-h-[50vh] object-contain"
+            />
+          </motion.div>
+        )}
+
+        <div className={`relative z-20 flex w-full px-4 sm:px-6 md:px-10 lg:px-16 ${isMobile ? 'flex-col text-center items-center pb-10 -mt-20' : 'h-full flex-row items-end pb-18 pt-24 lg:pb-18 max-[740px]:pb-24 max-[740px]:pt-22'}`}>
+          <motion.div 
+            key={isMobile ? "mobile" : "desktop"}
+            initial={isMobile ? { opacity: 0, y: 30 } : false}
+            animate={isMobile ? { opacity: 1, y: 0 } : false}
+            transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
+            className={`w-full ${isMobile ? 'max-w-lg' : 'max-w-3xl'}`}
+          >
             <div
-              className="space-y-5 transition-opacity duration-300 sm:space-y-6"
-              style={{ opacity: overlayOpacity }}
+              className={`space-y-5 transition-opacity duration-300 sm:space-y-6 ${isMobile ? 'flex flex-col items-center' : ''}`}
+              style={{ opacity: isMobile ? 1 : overlayOpacity }}
             >
               <div className="inline-flex max-w-full items-center gap-3 border border-[rgba(255,107,0,0.28)] bg-[rgba(10,10,10,0.5)] px-3 py-2 text-[0.62rem] uppercase tracking-[0.26em] text-[var(--color-muted)] backdrop-blur-md min-[360px]:px-4 min-[360px]:text-[0.68rem] sm:tracking-[0.4em]">
                 <span className="h-2 w-2 rounded-full bg-[var(--color-accent)] shadow-[0_0_16px_rgba(255,107,0,0.7)]" />
@@ -559,48 +602,54 @@ export default function Hero() {
               </div>
             </div>
 
-            <div className="mt-6 flex max-w-xl flex-wrap items-center gap-x-4 gap-y-2 text-[0.62rem] uppercase tracking-[0.2em] text-white/55 min-[360px]:text-[0.68rem] sm:mt-8 sm:text-[0.72rem] sm:tracking-[0.34em]">
-              <div className="h-px w-12 bg-[linear-gradient(90deg,rgba(255,107,0,0.95),transparent)] sm:w-16" />
-              <span>{hasSequenceCompleted ? "Sequence complete" : "Scroll to rotate"}</span>
-              <div
-                className={`flex items-center transition-opacity duration-300 ${hasSequenceCompleted ? "opacity-0" : "opacity-100"
-                  }`}
-              >
-                <span className="hero-scroll-cue" aria-hidden="true" />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div
-          className={`absolute inset-0 z-30 flex items-center justify-center bg-[rgba(5,5,5,0.82)] backdrop-blur-md transition-opacity duration-500 ${isSequenceReady ? "pointer-events-none opacity-0" : "opacity-100"
-            }`}
-        >
-          <div className="w-[min(24rem,calc(100vw-2rem))] space-y-4 rounded-[1.5rem] border border-[rgba(255,107,0,0.2)] bg-[linear-gradient(180deg,rgba(17,17,17,0.95),rgba(8,8,8,0.92))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.48)] min-[360px]:w-[min(24rem,calc(100vw-3rem))] min-[360px]:space-y-5 min-[360px]:rounded-[1.75rem] min-[360px]:p-7">
-            <p className="text-[0.64rem] uppercase tracking-[0.24em] text-[var(--color-muted)] min-[360px]:text-[0.72rem] min-[360px]:tracking-[0.38em]">
-              Preloading sequence
-            </p>
-            <div className="space-y-3">
-              <p className="font-[family:var(--font-heading)] text-[2.2rem] uppercase tracking-[0.06em] text-[var(--color-text)] min-[360px]:text-4xl min-[360px]:tracking-[0.08em]">
-                {loadingProgress}%
-              </p>
-              <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+            <div className={`mt-6 flex max-w-xl flex-wrap items-center gap-x-4 gap-y-2 text-[0.62rem] uppercase tracking-[0.2em] text-white/55 min-[360px]:text-[0.68rem] sm:mt-8 sm:text-[0.72rem] sm:tracking-[0.34em] ${isMobile ? 'justify-center mx-auto' : ''}`}>
+              {!isMobile && <div className="h-px w-12 bg-[linear-gradient(90deg,rgba(255,107,0,0.95),transparent)] sm:w-16" />}
+              <span>{isMobile ? "Discover the Difference Below" : (hasSequenceCompleted ? "Sequence complete" : "Scroll to rotate")}</span>
+              {!isMobile && (
                 <div
-                  className="h-full rounded-full bg-[linear-gradient(90deg,#ff6b00,#ff9a47)] transition-[width] duration-300"
-                  style={{ width: `${loadingProgress}%` }}
-                />
-              </div>
-              <p className="text-sm leading-6 text-white/62 sm:leading-7">
-                Staging the 140-frame showroom pass before the scroll sequence
-                begins.
-              </p>
+                  className={`flex items-center transition-opacity duration-300 ${hasSequenceCompleted ? "opacity-0" : "opacity-100"
+                    }`}
+                >
+                  <span className="hero-scroll-cue" aria-hidden="true" />
+                </div>
+              )}
             </div>
-          </div>
+          </motion.div>
         </div>
 
-        <div className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[0.56rem] uppercase tracking-[0.18em] text-white/55 backdrop-blur-md min-[360px]:px-4 min-[360px]:text-[0.62rem] sm:bottom-8 sm:left-auto sm:right-10 sm:translate-x-0 sm:px-4 sm:text-[0.68rem] sm:tracking-[0.3em] lg:right-16 max-[700px]:max-w-[calc(100vw-2rem)]">
-          Frame {formatFrameNumber(currentFrame)} / {String(TOTAL_FRAMES).padStart(FRAME_PAD_LENGTH, "0")}
-        </div>
+        {!isMobile && (
+          <div
+            className={`absolute inset-0 z-30 flex items-center justify-center bg-[rgba(5,5,5,0.82)] backdrop-blur-md transition-opacity duration-500 ${isSequenceReady ? "pointer-events-none opacity-0" : "opacity-100"
+              }`}
+          >
+            <div className="w-[min(24rem,calc(100vw-2rem))] space-y-4 rounded-[1.5rem] border border-[rgba(255,107,0,0.2)] bg-[linear-gradient(180deg,rgba(17,17,17,0.95),rgba(8,8,8,0.92))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.48)] min-[360px]:w-[min(24rem,calc(100vw-3rem))] min-[360px]:space-y-5 min-[360px]:rounded-[1.75rem] min-[360px]:p-7">
+              <p className="text-[0.64rem] uppercase tracking-[0.24em] text-[var(--color-muted)] min-[360px]:text-[0.72rem] min-[360px]:tracking-[0.38em]">
+                Preloading sequence
+              </p>
+              <div className="space-y-3">
+                <p className="font-[family:var(--font-heading)] text-[2.2rem] uppercase tracking-[0.06em] text-[var(--color-text)] min-[360px]:text-4xl min-[360px]:tracking-[0.08em]">
+                  {loadingProgress}%
+                </p>
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div
+                    className="h-full rounded-full bg-[linear-gradient(90deg,#ff6b00,#ff9a47)] transition-[width] duration-300"
+                    style={{ width: `${loadingProgress}%` }}
+                  />
+                </div>
+                <p className="text-sm leading-6 text-white/62 sm:leading-7">
+                  Staging the 140-frame showroom pass before the scroll sequence
+                  begins.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!isMobile && (
+          <div className="absolute bottom-5 left-1/2 z-20 -translate-x-1/2 rounded-full border border-white/10 bg-black/30 px-3 py-2 text-[0.56rem] uppercase tracking-[0.18em] text-white/55 backdrop-blur-md min-[360px]:px-4 min-[360px]:text-[0.62rem] sm:bottom-8 sm:left-auto sm:right-10 sm:translate-x-0 sm:px-4 sm:text-[0.68rem] sm:tracking-[0.3em] lg:right-16 max-[700px]:max-w-[calc(100vw-2rem)]">
+            Frame {formatFrameNumber(currentFrame)} / {String(TOTAL_FRAMES).padStart(FRAME_PAD_LENGTH, "0")}
+          </div>
+        )}
       </div>
     </section>
   );
