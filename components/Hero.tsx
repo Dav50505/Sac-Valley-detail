@@ -563,9 +563,8 @@ export default function Hero() {
               <div className="h-px w-12 bg-[linear-gradient(90deg,rgba(255,107,0,0.95),transparent)] sm:w-16" />
               <span>{hasSequenceCompleted ? "Sequence complete" : "Scroll to rotate"}</span>
               <div
-                className={`flex items-center transition-opacity duration-300 ${
-                  hasSequenceCompleted ? "opacity-0" : "opacity-100"
-                }`}
+                className={`flex items-center transition-opacity duration-300 ${hasSequenceCompleted ? "opacity-0" : "opacity-100"
+                  }`}
               >
                 <span className="hero-scroll-cue" aria-hidden="true" />
               </div>
@@ -574,9 +573,8 @@ export default function Hero() {
         </div>
 
         <div
-          className={`absolute inset-0 z-30 flex items-center justify-center bg-[rgba(5,5,5,0.82)] backdrop-blur-md transition-opacity duration-500 ${
-            isSequenceReady ? "pointer-events-none opacity-0" : "opacity-100"
-          }`}
+          className={`absolute inset-0 z-30 flex items-center justify-center bg-[rgba(5,5,5,0.82)] backdrop-blur-md transition-opacity duration-500 ${isSequenceReady ? "pointer-events-none opacity-0" : "opacity-100"
+            }`}
         >
           <div className="w-[min(24rem,calc(100vw-2rem))] space-y-4 rounded-[1.5rem] border border-[rgba(255,107,0,0.2)] bg-[linear-gradient(180deg,rgba(17,17,17,0.95),rgba(8,8,8,0.92))] p-5 shadow-[0_24px_80px_rgba(0,0,0,0.48)] min-[360px]:w-[min(24rem,calc(100vw-3rem))] min-[360px]:space-y-5 min-[360px]:rounded-[1.75rem] min-[360px]:p-7">
             <p className="text-[0.64rem] uppercase tracking-[0.24em] text-[var(--color-muted)] min-[360px]:text-[0.72rem] min-[360px]:tracking-[0.38em]">
