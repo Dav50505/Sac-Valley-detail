@@ -162,7 +162,7 @@ export default function Hero() {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const mediaQuery = window.matchMedia('(max-width: 767px)');
+    const mediaQuery = window.matchMedia('(max-width: 1023px)');
     setIsMobile(mediaQuery.matches);
 
     const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
@@ -459,7 +459,7 @@ export default function Hero() {
         }
 
         // Only update display if not on mobile, since mobile doesn't use the canvas sequence
-        if (window.innerWidth >= 768 && (index === 0 || index === currentFrameRef.current)) {
+        if (window.innerWidth >= 1024 && (index === 0 || index === currentFrameRef.current)) {
           updateSequenceDisplay(progressRef.current);
         }
       };
@@ -473,7 +473,7 @@ export default function Hero() {
     const initialScrollY = window.scrollY;
 
     // Skip sequence lock and behavior on mobile
-    if (window.innerWidth < 768) {
+    if (window.innerWidth < 1024) {
       sequenceUnlockedRef.current = true;
       completionHandledRef.current = true;
     } else {
@@ -536,12 +536,12 @@ export default function Hero() {
     <section
       id="hero"
       ref={trackRef}
-      className={`relative bg-[var(--color-bg)] ${isMobile ? 'min-h-[100svh]' : ''}`}
+      className={`relative bg-[var(--color-bg)] ${isMobile ? 'h-[100svh]' : ''}`}
       data-hero-active={!isMobile && isHeroActive ? "true" : "false"}
       data-hero-lock={!isMobile && isBodyLockedByHero ? "true" : "false"}
       style={isMobile ? {} : { height: trackHeight }}
     >
-      <div className={`sticky top-0 overflow-hidden ${isMobile ? 'min-h-[100svh] flex flex-col pt-[12vh]' : 'h-[100svh]'}`}>
+      <div className="sticky top-0 h-[100svh] overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(255,107,0,0.14),transparent_32%),linear-gradient(180deg,rgba(0,0,0,0.12),rgba(0,0,0,0.44))]" />
         <div className="absolute inset-x-0 top-0 z-20 h-px bg-[linear-gradient(90deg,transparent,rgba(255,107,0,0.92),transparent)]" />
         <div className="pointer-events-none absolute inset-0 z-10 bg-[radial-gradient(circle_at_20%_18%,rgba(255,107,0,0.12),transparent_22%),linear-gradient(180deg,rgba(0,0,0,0.08),transparent_25%,rgba(0,0,0,0.7)_100%)]" />
@@ -563,20 +563,20 @@ export default function Hero() {
 
         {isMobile && (
           <motion.div 
-            initial={{ opacity: 0, scale: 0.85, y: 40 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
             transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-0 flex flex-1 items-center justify-center w-full px-4 -mb-2 mt-4"
+            className="absolute inset-0 z-0"
           >
             <img
-              src="/moblie.png"
+              src="/moblie-hero.png"
               alt="Sac Valley Detail mobile view"
-              className="w-full max-h-[50vh] object-contain"
+              className="h-full w-full object-cover object-center"
             />
           </motion.div>
         )}
 
-        <div className={`relative z-20 flex w-full px-4 sm:px-6 md:px-10 lg:px-16 ${isMobile ? 'flex-col text-center items-center pb-10 -mt-20' : 'h-full flex-row items-end pb-18 pt-24 lg:pb-18 max-[740px]:pb-24 max-[740px]:pt-22'}`}>
+        <div className={`relative z-20 flex h-full w-full px-4 sm:px-6 md:px-10 lg:px-16 ${isMobile ? 'flex-col justify-end items-center pb-24 text-center sm:pb-32' : 'flex-row items-end pb-18 pt-24 lg:pb-18 max-[740px]:pb-24 max-[740px]:pt-22'}`}>
           <motion.div 
             key={isMobile ? "mobile" : "desktop"}
             initial={isMobile ? { opacity: 0, y: 30 } : false}
